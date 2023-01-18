@@ -1,4 +1,3 @@
-import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -7,15 +6,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import winsound
 from datetime import datetime as time
+import json
 
 
 def beep():
-    frequency = 1600  # Set Frequency To 2500 Hertz
-    duration = 500  # Set Duration To 1000 ms == 1 second
+    frequency = 1600
+    duration = 500
     winsound.Beep(frequency, duration)
 
 
-class WG_Gesucht_Crawler:
+class WGGesuchtCrawler:
     def __init__(self, driver_options=None, args=None):
         self.driver = None
         self.setup_chrome_driver(driver_options, args)
@@ -26,7 +26,7 @@ class WG_Gesucht_Crawler:
 
         chrome_options = Options()
 
-        for (k, v) in driver_options:
+        for (k, v) in driver_options.items():
             chrome_options.add_experimental_option(k, v)
         for arg in args:
             chrome_options.add_argument(arg)
@@ -60,7 +60,7 @@ class WG_Gesucht_Crawler:
         self.driver.find_element_by_xpath('//*[@id ="login_password"]').send_keys(password)
         self.driver.find_element_by_xpath('//div[input[@id ="login_submit"]]').click()
 
-        while (True):
+        while True:
             try:
                 self.driver.find_element_by_xpath('//div[a[@id ="hide_login_show_register"]]')
             except:
@@ -88,7 +88,7 @@ class WG_Gesucht_Crawler:
 
 
 def main():
-    config_path = "individual_submissions.json"
+    config_path = "config.json"
     config = json.load(open(config_path))
 
     email = config["email"]
@@ -101,7 +101,7 @@ def main():
                       }
     args = ["--start-fullscreen"]
 
-    crawler = WG_Gesucht_Crawler(driver_options=driver_options, args=args)
+    crawler = WGGesuchtCrawler(driver_options=driver_options, args=args)
     crawler.login(email, password)
     crawler.custom_filter_search()
 
@@ -113,7 +113,7 @@ def main():
             beep()
             break
 
-    crawler = WG_Gesucht_Crawler()
+    crawler = WGGesuchtCrawler()
     crawler.login(email, password)
     crawler.custom_filter_search()
     driver = crawler.driver
