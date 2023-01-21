@@ -1,23 +1,26 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import winsound
 from datetime import datetime as time
 import json
+import re
 
 
 def beep():
-    frequency = 1600
-    duration = 500
+    frequency = 440
+    duration = 1000
     winsound.Beep(frequency, duration)
 
 
 class WGGesuchtCrawler:
     def __init__(self, driver_options=None, args=None):
         self.driver = None
+        self.offers = None
         self.setup_chrome_driver(driver_options, args)
 
     def setup_chrome_driver(self, driver_options=None, args=None):
@@ -80,10 +83,20 @@ class WGGesuchtCrawler:
             (By.XPATH, '//ul[@id ="user_filter"]/li/a')))
         self.driver.find_element_by_xpath('//ul[@id ="user_filter"]/li/a').click()
 
-    def list_offers(self):
-        pass
+    def enlist_offers(self):
+        WebDriverWait(self.driver, 5).until(EC.visibility_of_element_located(
+            (By.CLASS_NAME, "offer_list_item")))
+        self.offers = self.driver.find_elements(By.CLASS_NAME, "offer_list_item")
 
-    def handle_offer(self, offer_object):
+    def get_offer_online_time(self, offer: WebElement) -> int:
+        time_online_str = offer.find_element_by_xpath("//span[contains(text(), \"Online\")]").text
+        minutes = int(re.match(r'Online: (\d+) (Minuten)?(Stunden)?', time_online_str).group(1))
+        return minutes
+
+    def handle_offer(self, offer: WebElement):
+        if self.get_offer_online_time(offer) < 20:
+            beep()
+            offer.find_element_by_xpath("//.a").click()
         pass
 
 
@@ -105,13 +118,9 @@ def main():
     crawler.login(email, password)
     crawler.custom_filter_search()
 
-    while True:
-        try:
-            crawler.list_offers()
-        except Exception as e:
-            print(e)
-            beep()
-            break
+    crawler.enlist_offers()
+    for offer in crawler.offers:
+        crawler.handle_offer(offer)
 
     crawler = WGGesuchtCrawler()
     crawler.login(email, password)
