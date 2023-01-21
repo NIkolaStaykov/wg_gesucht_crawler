@@ -1,3 +1,4 @@
+import random
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -9,6 +10,8 @@ import winsound
 from datetime import datetime as time
 import json
 import re
+
+timeout = 8  # seconds of timeout for the webdriver to wait for an element to be present
 
 
 def beep():
@@ -53,12 +56,12 @@ class WGGesuchtCrawler:
         self.driver.find_element_by_xpath('//a[contains(., "Save")]').click()
 
         # Sign in
+        WebDriverWait(self.driver, timeout).until(
+            EC.element_to_be_clickable((By.XPATH, '//div[a[contains(., "Mein Konto")]]')))
         self.driver.find_element_by_xpath('//div[a[contains(., "Mein Konto")]]').click()
 
-        print(time.now())
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, timeout).until(
             EC.visibility_of_element_located((By.XPATH, '//*[@id ="login_email_username"]')))
-        print(time.now())
         self.driver.find_element_by_xpath('//*[@id ="login_email_username"]').send_keys(email)
         self.driver.find_element_by_xpath('//*[@id ="login_password"]').send_keys(password)
         self.driver.find_element_by_xpath('//div[input[@id ="login_submit"]]').click()
@@ -74,30 +77,47 @@ class WGGesuchtCrawler:
 
     def custom_filter_search(self):
         self.driver.find_element_by_xpath('//input[@id ="autocompinp"]').send_keys("München")
-        WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable(
+        WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@class='autocomplete-suggestions']/div[contains(., 'ünchen')]")))
         self.driver.find_element_by_xpath(
             "//div[@class ='autocomplete-suggestions']/div[contains(., 'ünchen')]").click()
         self.driver.find_element_by_xpath('//input[@id ="search_button"]').click()
-        WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable(
+        WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, '//ul[@id ="user_filter"]/li/a')))
         self.driver.find_element_by_xpath('//ul[@id ="user_filter"]/li/a').click()
 
     def enlist_offers(self):
-        WebDriverWait(self.driver, 5).until(EC.visibility_of_element_located(
+        WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(
             (By.CLASS_NAME, "offer_list_item")))
         self.offers = self.driver.find_elements(By.CLASS_NAME, "offer_list_item")
 
     def get_offer_online_time(self, offer: WebElement) -> int:
         time_online_str = offer.find_element_by_xpath("//span[contains(text(), \"Online\")]").text
-        minutes = int(re.match(r'Online: (\d+) (Minuten)?(Stunden)?', time_online_str).group(1))
+        try:
+            minutes = int(re.match(r'Online: (\d+) Minuten', time_online_str).group(1))
+        except:
+            minutes = 10000
         return minutes
 
     def handle_offer(self, offer: WebElement):
         if self.get_offer_online_time(offer) < 20:
             beep()
-            offer.find_element_by_xpath("//.a").click()
-        pass
+            print("New offer at {}".format(time.now().strftime("%H:%M:%S")))
+
+    def handle_offers(self):
+        for offer in self.offers:
+            self.handle_offer(offer)
+
+    def refresh(self):
+        self.driver.refresh()
+        print("Page refreshed at {}".format(time.now().strftime("%H:%M:%S")))
+        self.enlist_offers()
+
+    def run(self):
+        while True:
+            self.refresh()
+            self.handle_offers()
+            sleep(random.randint(60, 180))
 
 
 def main():
@@ -112,23 +132,13 @@ def main():
                       "prefs": {"credentials_enable_service": False,
                                 "profile.password_manager_enabled": False}
                       }
-    args = ["--start-fullscreen"]
+    args = ["--start-fullscreen", "--headless", "window-size=1920x1080"]
 
     crawler = WGGesuchtCrawler(driver_options=driver_options, args=args)
     crawler.login(email, password)
     crawler.custom_filter_search()
 
-    crawler.enlist_offers()
-    for offer in crawler.offers:
-        crawler.handle_offer(offer)
-
-    crawler = WGGesuchtCrawler()
-    crawler.login(email, password)
-    crawler.custom_filter_search()
-    driver = crawler.driver
-
-    # Checking
-    driver.quit()
+    crawler.run()
 
 
 if __name__ == "__main__":
