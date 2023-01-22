@@ -70,16 +70,13 @@ class WGGesuchtCrawler:
         self.driver.find_element_by_xpath('//*[@id ="login_password"]').send_keys(self.password)
         self.driver.find_element_by_xpath('//div[input[@id ="login_submit"]]').click()
 
-        while True:
-            try:
-                self.driver.find_element_by_xpath('//div[a[@id ="hide_login_show_register"]]')
-            except:
-                break
-            sleep(0.2)
-
-        return self.driver
+        WebDriverWait(self.driver, timeout).until(
+            EC.invisibility_of_element_located((By.XPATH, '//div[a[@id ="hide_login_show_register"]]')))
 
     def custom_filter_search(self):
+        WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
+            (By.XPATH, '//input[@id ="autocompinp"]')))
+
         self.driver.find_element_by_xpath('//input[@id ="autocompinp"]').send_keys("München")
         WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@class='autocomplete-suggestions']/div[contains(., 'ünchen')]")))
@@ -90,7 +87,7 @@ class WGGesuchtCrawler:
             (By.XPATH, '//ul[@id ="user_filter"]/li/a')))
         self.driver.find_element_by_xpath('//ul[@id ="user_filter"]/li/a').click()
 
-    def enlist_offers(self):
+    def get_new_offers(self):
         WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(
             (By.CLASS_NAME, "offer_list_item")))
         self.new_offers = self.driver.find_elements_by_xpath(
@@ -105,7 +102,7 @@ class WGGesuchtCrawler:
         return minutes
 
     def handle_offer(self, offer: WebElement):
-        if self.get_offer_online_time(offer) < 100 and hash(offer.text) not in self.seen_offers:
+        if hash(offer.text) not in self.seen_offers:
             beep(3)
             print("New offer at {}".format(time.now().strftime("%H:%M:%S")))
             self.seen_offers.append(hash(offer.text))
@@ -116,16 +113,25 @@ class WGGesuchtCrawler:
 
     def refresh(self):
         self.driver.refresh()
-        self.enlist_offers()
+        self.get_new_offers()
 
     def run(self):
         self.login()
         self.custom_filter_search()
         print("Starting to crawl...")
+
+        # Initial listing of offers
+        self.get_new_offers()
+        for offer in self.new_offers:
+            self.seen_offers.append(hash(offer.text))
+
+        # Main loop checking for new offers
         while True:
+            print("Checking for new offers...")
+            sleep(random.randint(60, 180))
             self.refresh()
             self.handle_offers()
-            sleep(random.randint(1, 10))
+
 
 
 def main():
