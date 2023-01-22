@@ -106,9 +106,8 @@ class WGGesuchtCrawler:
 
     def handle_offer(self, offer: WebElement):
         if self.get_offer_online_time(offer) < 100 and hash(offer.text) not in self.seen_offers:
-            # beep(3)
+            beep(3)
             print("New offer at {}".format(time.now().strftime("%H:%M:%S")))
-            print(offer.text)
             self.seen_offers.append(hash(offer.text))
 
     def handle_offers(self):
@@ -116,7 +115,6 @@ class WGGesuchtCrawler:
             self.handle_offer(offer)
 
     def refresh(self):
-        print("Refreshing at {}".format(time.now().strftime("%H:%M:%S")))
         self.driver.refresh()
         self.enlist_offers()
 
