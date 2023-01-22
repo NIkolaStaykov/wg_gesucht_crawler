@@ -21,7 +21,9 @@ def beep():
 
 
 class WGGesuchtCrawler:
-    def __init__(self, driver_options=None, args=None):
+    def __init__(self, email, password, driver_options=None, args=None):
+        self.email = email
+        self.password = password
         self.driver = None
         self.offers = None
         self.setup_chrome_driver(driver_options, args)
@@ -40,7 +42,7 @@ class WGGesuchtCrawler:
         # create the initial window
         self.driver = webdriver.Chrome(options=chrome_options)
 
-    def login(self, email, password):
+    def login(self):
 
         # go to the home page
         self.driver.get('https://www.wg-gesucht.de')
@@ -62,8 +64,8 @@ class WGGesuchtCrawler:
 
         WebDriverWait(self.driver, timeout).until(
             EC.visibility_of_element_located((By.XPATH, '//*[@id ="login_email_username"]')))
-        self.driver.find_element_by_xpath('//*[@id ="login_email_username"]').send_keys(email)
-        self.driver.find_element_by_xpath('//*[@id ="login_password"]').send_keys(password)
+        self.driver.find_element_by_xpath('//*[@id ="login_email_username"]').send_keys(self.email)
+        self.driver.find_element_by_xpath('//*[@id ="login_password"]').send_keys(self.password)
         self.driver.find_element_by_xpath('//div[input[@id ="login_submit"]]').click()
 
         while True:
@@ -110,10 +112,12 @@ class WGGesuchtCrawler:
 
     def refresh(self):
         self.driver.refresh()
-        print("Page refreshed at {}".format(time.now().strftime("%H:%M:%S")))
         self.enlist_offers()
 
     def run(self):
+        self.login()
+        self.custom_filter_search()
+        print("Starting to crawl...")
         while True:
             self.refresh()
             self.handle_offers()
@@ -134,10 +138,7 @@ def main():
                       }
     args = ["--start-fullscreen", "--headless", "window-size=1920x1080"]
 
-    crawler = WGGesuchtCrawler(driver_options=driver_options, args=args)
-    crawler.login(email, password)
-    crawler.custom_filter_search()
-
+    crawler = WGGesuchtCrawler(email, password, driver_options=driver_options, args=args)
     crawler.run()
 
 
