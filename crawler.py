@@ -14,10 +14,11 @@ import re
 timeout = 8  # seconds of timeout for the webdriver to wait for an element to be present
 
 
-def beep():
+def beep(times=1):
     frequency = 440
     duration = 1000
-    winsound.Beep(frequency, duration)
+    for i in range(times):
+        winsound.Beep(frequency, duration)
 
 
 class WGGesuchtCrawler:
@@ -25,7 +26,8 @@ class WGGesuchtCrawler:
         self.email = email
         self.password = password
         self.driver = None
-        self.offers = None
+        self.new_offers = None
+        self.seen_offers = []
         self.setup_chrome_driver(driver_options, args)
 
     def setup_chrome_driver(self, driver_options=None, args=None):
@@ -91,26 +93,30 @@ class WGGesuchtCrawler:
     def enlist_offers(self):
         WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(
             (By.CLASS_NAME, "offer_list_item")))
-        self.offers = self.driver.find_elements(By.CLASS_NAME, "offer_list_item")
+        self.new_offers = self.driver.find_elements_by_xpath(
+            '//div[contains(@class, "offer_list_item") and not(contains(@class, "cursor-pointer"))]')
 
     def get_offer_online_time(self, offer: WebElement) -> int:
-        time_online_str = offer.find_element_by_xpath("//span[contains(text(), \"Online\")]").text
+        offer_text = offer.text
         try:
-            minutes = int(re.match(r'Online: (\d+) Minuten', time_online_str).group(1))
+            minutes = int(re.match(r'Online: (\d+) Minuten', offer_text).group(1))
         except:
-            minutes = 10000
+            minutes = 61
         return minutes
 
     def handle_offer(self, offer: WebElement):
-        if self.get_offer_online_time(offer) < 20:
-            beep()
+        if self.get_offer_online_time(offer) < 100 and hash(offer.text) not in self.seen_offers:
+            # beep(3)
             print("New offer at {}".format(time.now().strftime("%H:%M:%S")))
+            print(offer.text)
+            self.seen_offers.append(hash(offer.text))
 
     def handle_offers(self):
-        for offer in self.offers:
+        for offer in self.new_offers:
             self.handle_offer(offer)
 
     def refresh(self):
+        print("Refreshing at {}".format(time.now().strftime("%H:%M:%S")))
         self.driver.refresh()
         self.enlist_offers()
 
@@ -121,7 +127,7 @@ class WGGesuchtCrawler:
         while True:
             self.refresh()
             self.handle_offers()
-            sleep(random.randint(60, 180))
+            sleep(random.randint(1, 10))
 
 
 def main():
