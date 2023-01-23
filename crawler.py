@@ -102,10 +102,11 @@ class WGGesuchtCrawler:
         return minutes
 
     def handle_offer(self, offer: WebElement):
-        if hash(offer.text) not in self.seen_offers:
-            beep(3)
+        if hash(offer.text[:30]) not in self.seen_offers:
+            beep()
             print("New offer at {}".format(time.now().strftime("%H:%M:%S")))
-            self.seen_offers.append(hash(offer.text))
+            print(offer.text)
+            self.seen_offers.append(hash(offer.text[:30]))
 
     def handle_offers(self):
         for offer in self.new_offers:
@@ -123,11 +124,10 @@ class WGGesuchtCrawler:
         # Initial listing of offers
         self.get_new_offers()
         for offer in self.new_offers:
-            self.seen_offers.append(hash(offer.text))
+            self.seen_offers.append(hash(offer.text[:30]))
 
         # Main loop checking for new offers
         while True:
-            print("Checking for new offers...")
             sleep(random.randint(60, 180))
             self.refresh()
             self.handle_offers()
