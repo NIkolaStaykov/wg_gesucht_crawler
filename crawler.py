@@ -6,10 +6,15 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
-import winsound
 from datetime import datetime as time
 import json
 import re
+
+from sys import platform
+if platform == "darwin":
+    import AppKit
+elif platform == "win32":
+    import winsound
 
 timeout = 8  # seconds of timeout for the webdriver to wait for an element to be present
 
@@ -17,8 +22,12 @@ timeout = 8  # seconds of timeout for the webdriver to wait for an element to be
 def beep(times=1):
     frequency = 440
     duration = 1000
-    for i in range(times):
-        winsound.Beep(frequency, duration)
+    if platform == "darwin":
+        for i in range(times):
+            AppKit.NSBeep()
+    elif platform == "win32":
+        for i in range(times):
+            winsound.Beep(frequency, duration)
 
 
 class WGGesuchtCrawler:
@@ -146,7 +155,7 @@ def main():
                       "prefs": {"credentials_enable_service": False,
                                 "profile.password_manager_enabled": False}
                       }
-    args = ["--start-fullscreen", "--headless", "window-size=1920x1080"]
+    args = ["--start-fullscreen", "--headless", "window-size=1920x1080", "--log-level=3"]
 
     crawler = WGGesuchtCrawler(email, password, driver_options=driver_options, args=args)
     crawler.run()
