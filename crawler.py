@@ -10,24 +10,14 @@ from datetime import datetime as time
 import json
 import re
 
-from sys import platform
-if platform == "darwin":
-    import AppKit
-elif platform == "win32":
-    import winsound
+from playsound import playsound
 
 timeout = 8  # seconds of timeout for the webdriver to wait for an element to be present
 
 
 def beep(times=1):
-    frequency = 440
-    duration = 1000
-    if platform == "darwin":
-        for i in range(times):
-            AppKit.NSBeep()
-    elif platform == "win32":
-        for i in range(times):
-            winsound.Beep(frequency, duration)
+    for i in range(times):
+        playsound('audio/notification_sound.mp3')
 
 
 class WGGesuchtCrawler:
