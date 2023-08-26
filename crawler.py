@@ -83,7 +83,7 @@ class WGGesuchtCrawler:
         WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@class='autocomplete-suggestions']/div[contains(., 'ünchen')]")))
         self.driver.find_element(By.XPATH,
-            "//div[@class ='autocomplete-suggestions']/div[contains(., 'ünchen')]").click()
+                                 "//div[@class ='autocomplete-suggestions']/div[contains(., 'ünchen')]").click()
         self.driver.find_element(By.XPATH, '//input[@id ="search_button"]').click()
         WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, '//ul[@id ="user_filter"]/li/a')))
@@ -92,10 +92,16 @@ class WGGesuchtCrawler:
     def get_new_offers(self):
         WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(
             (By.CLASS_NAME, "offer_list_item")))
-        self.new_offers = self.driver.find_elements(By.XPATH,
-            '//div[contains(@class, "offer_list_item") and not(contains(@class, "cursor-pointer"))]')
+        unfiltered_new_offers = self.driver.find_elements(By.XPATH,
+                                                          '//div[contains(@class, "offer_list_item") and not(contains(@class, "cursor-pointer"))]')
+        self.new_offers = []
+        for offer in unfiltered_new_offers:
+            online_time = self.get_offer_online_time(offer)
+            if online_time < 60:
+                self.new_offers.append(offer)
 
-    def get_offer_online_time(self, offer: WebElement) -> int:
+    @staticmethod
+    def get_offer_online_time(offer: WebElement) -> int:
         offer_text = offer.text
         try:
             minutes = int(re.match(r'Online: (\d+) Minuten', offer_text).group(1))
@@ -106,6 +112,7 @@ class WGGesuchtCrawler:
     def handle_offer(self, offer: WebElement):
         if hash(offer.text[:30]) not in self.seen_offers:
             beep()
+            print("-" * 50 + "\n")
             print("New offer at {}".format(time.now().strftime("%H:%M:%S")))
             print(offer.text)
             self.seen_offers.append(hash(offer.text[:30]))
@@ -133,7 +140,6 @@ class WGGesuchtCrawler:
             sleep(random.randint(60, 180))
             self.refresh()
             self.handle_offers()
-
 
 
 def main():
