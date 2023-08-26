@@ -48,48 +48,51 @@ class WGGesuchtCrawler:
         # go to the home page
         self.driver.get('https://www.wg-gesucht.de')
 
+        print("Waiting for cookies...")
         while True:
             try:
-                self.driver.find_element_by_xpath('//*[@id="cmpwelcomebtncustom"]').click()
+                self.driver.find_element(By.XPATH, '//a[contains(., "Settings")]').click()
                 break
             except:
                 pass
 
         # Cookies
-        self.driver.find_element_by_xpath('//a[contains(., "Save")]').click()
+        self.driver.find_element(By.XPATH, '//a[contains(., "Save")]').click()
 
         # Sign in
         WebDriverWait(self.driver, timeout).until(
             EC.element_to_be_clickable((By.XPATH, '//div[a[contains(., "Mein Konto")]]')))
-        self.driver.find_element_by_xpath('//div[a[contains(., "Mein Konto")]]').click()
+        self.driver.find_element(By.XPATH, '//div[a[contains(., "Mein Konto")]]').click()
 
         WebDriverWait(self.driver, timeout).until(
             EC.visibility_of_element_located((By.XPATH, '//*[@id ="login_email_username"]')))
-        self.driver.find_element_by_xpath('//*[@id ="login_email_username"]').send_keys(self.email)
-        self.driver.find_element_by_xpath('//*[@id ="login_password"]').send_keys(self.password)
-        self.driver.find_element_by_xpath('//div[input[@id ="login_submit"]]').click()
+        self.driver.find_element(By.XPATH, '//*[@id ="login_email_username"]').send_keys(self.email)
+        self.driver.find_element(By.XPATH, '//*[@id ="login_password"]').send_keys(self.password)
+        self.driver.find_element(By.XPATH, '//div[input[@id ="login_submit"]]').click()
 
         WebDriverWait(self.driver, timeout).until(
             EC.invisibility_of_element_located((By.XPATH, '//div[a[@id ="hide_login_show_register"]]')))
+
+        print("Logged in")
 
     def custom_filter_search(self):
         WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, '//input[@id ="autocompinp"]')))
 
-        self.driver.find_element_by_xpath('//input[@id ="autocompinp"]').send_keys("München")
+        self.driver.find_element(By.XPATH, '//input[@id ="autocompinp"]').send_keys("München")
         WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@class='autocomplete-suggestions']/div[contains(., 'ünchen')]")))
-        self.driver.find_element_by_xpath(
+        self.driver.find_element(By.XPATH,
             "//div[@class ='autocomplete-suggestions']/div[contains(., 'ünchen')]").click()
-        self.driver.find_element_by_xpath('//input[@id ="search_button"]').click()
+        self.driver.find_element(By.XPATH, '//input[@id ="search_button"]').click()
         WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(
             (By.XPATH, '//ul[@id ="user_filter"]/li/a')))
-        self.driver.find_element_by_xpath('//ul[@id ="user_filter"]/li/a').click()
+        self.driver.find_element(By.XPATH, '//ul[@id ="user_filter"]/li/a').click()
 
     def get_new_offers(self):
         WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(
             (By.CLASS_NAME, "offer_list_item")))
-        self.new_offers = self.driver.find_elements_by_xpath(
+        self.new_offers = self.driver.find_elements(By.XPATH,
             '//div[contains(@class, "offer_list_item") and not(contains(@class, "cursor-pointer"))]')
 
     def get_offer_online_time(self, offer: WebElement) -> int:
@@ -145,8 +148,8 @@ def main():
                       "prefs": {"credentials_enable_service": False,
                                 "profile.password_manager_enabled": False}
                       }
-    args = ["--start-fullscreen", "--headless", "window-size=1920x1080", "--log-level=3"]
-
+    # args = ["--start-fullscreen", "--headless", "window-size=1920x1080", "--log-level=3"]
+    args = ["--start-fullscreen", "window-size=1920x1080", "--log-level=3"]
     crawler = WGGesuchtCrawler(email, password, driver_options=driver_options, args=args)
     crawler.run()
 
