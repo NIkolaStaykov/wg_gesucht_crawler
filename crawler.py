@@ -148,8 +148,7 @@ def main():
                       "prefs": {"credentials_enable_service": False,
                                 "profile.password_manager_enabled": False}
                       }
-    # args = ["--start-fullscreen", "--headless", "window-size=1920x1080", "--log-level=3"]
-    args = ["--start-fullscreen", "window-size=1920x1080", "--log-level=3"]
+    args = ["--start-fullscreen", "--headless", "window-size=1920x1080", "--log-level=3"]
     crawler = WGGesuchtCrawler(email, password, driver_options=driver_options, args=args)
     crawler.run()
 

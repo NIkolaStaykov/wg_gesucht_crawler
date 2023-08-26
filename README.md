@@ -3,6 +3,7 @@
 This project performs automated checks for new posts on wg-gesucht.de. It sends a sound
 notification if there are new posts matching predefined  user criteria.
 You have to define your criteria from inside your profile in the website.
+*Important*: If you don't have a profile and a predefined search filter, the program will not work. 
 
 **Requirements**
 
