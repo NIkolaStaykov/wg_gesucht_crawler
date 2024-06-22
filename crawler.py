@@ -12,7 +12,7 @@ import re
 
 from playsound import playsound
 
-timeout = 8  # seconds of timeout for the webdriver to wait for an element to be present
+timeout = 40  # seconds of timeout for the webdriver to wait for an element to be present
 
 
 def beep(times=1):
